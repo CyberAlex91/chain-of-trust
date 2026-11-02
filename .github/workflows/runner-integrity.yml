@@ -22,6 +22,12 @@ jobs:
       - name: Verify application before execution
         shell: bash
         run: |
+          resolved_python="$(command -v python3)"
+          echo "Resolved Python: $resolved_python"
+          if [ "$resolved_python" != "/usr/bin/python3" ]; then
+            echo "::error::Unexpected Python executable - stopping before application execution"
+            exit 1
+          fi
           echo "Application committed on GitHub:"
           git show HEAD:app.py
           echo "Workspace application:"
@@ -31,11 +37,11 @@ jobs:
 
       - name: Execute application
         shell: bash
-        run: python3 app.py
+        run: /usr/bin/python3 app.py
 
       - name: Inspect application after execution
         if: ${{ !cancelled() }}
         shell: bash
         run: |
           echo "Workspace differences:"
-          git diff HEAD -- app.py
+          git diff --exit-code HEAD -- app.py
