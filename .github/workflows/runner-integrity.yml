@@ -1,0 +1,41 @@
+name: Runner Integrity Lab
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runner_lab:
+    name: Controlled runner experiment
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, linux, x64, chain-trust-lab]
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout clean source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Verify application before execution
+        shell: bash
+        run: |
+          echo "Application committed on GitHub:"
+          git show HEAD:app.py
+          echo "Workspace application:"
+          cat app.py
+          git diff --exit-code HEAD -- app.py
+          sha256sum app.py
+
+      - name: Execute application
+        shell: bash
+        run: python3 app.py
+
+      - name: Inspect application after execution
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          echo "Workspace differences:"
+          git diff HEAD -- app.py
